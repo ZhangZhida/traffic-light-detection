@@ -2,6 +2,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <algorithm>
 
 
 using namespace std;
@@ -80,6 +81,10 @@ Rect rectCenterScale(Rect rect0, double ratio_width, double ratio_height) {
     return rect0;
 }
 
+bool compare(int a, int b) {
+    return a < b;
+}
+
 void houghLinesAnalyze(vector<Vec2f> lines, vector<Vec2f>& resultLines) {
 
     vector<float> thetaColl_vertical, rhoColl_vertical;
@@ -94,7 +99,7 @@ void houghLinesAnalyze(vector<Vec2f> lines, vector<Vec2f>& resultLines) {
             rhoColl_vertical.push_back(rho);
         }
 
-        if(theta < 0.1 || theta > 3.14) {
+        if(theta < 0.02 || theta > 3.13) {
 
 //            cout << "theta: " << theta << ", rho: " << rho << endl;
             thetaColl_horizontal.push_back(theta);
@@ -108,8 +113,8 @@ void houghLinesAnalyze(vector<Vec2f> lines, vector<Vec2f>& resultLines) {
     }
 
     // 对霍夫变换得到的水平线进行预处理，位于上下两侧的线应该具有更大的权比较合理
-    Mat thetaColl_horizontal_sorted;
-    sort(Mat(thetaColl_horizontal), thetaColl_horizontal_sorted, SORT_ASCENDING);
+//    Mat thetaColl_horizontal_sorted;
+//    sort(Mat(thetaColl_horizontal), thetaColl_horizontal_sorted, SORT_ASCENDING);
 
     // 用Kmeans分别对水平和数值的rho值进行聚类，结果中应该竖直和水平各有两个kmeans中心
 //    vector<string> labels;
@@ -159,15 +164,15 @@ void houghLinesAnalyze(vector<Vec2f> lines, vector<Vec2f>& resultLines) {
 
 int main(){
 
-//    Mat img_src = cv::imread("/home/zhida/Desktop/example_data/2018_0318_155903_898.mp4_20180329_174351.047.jpg");
+    Mat img_src = cv::imread("/home/zhida/Desktop/example_data/2018_0318_155903_898.mp4_20180329_174351.047.jpg");
 //    Mat img_src = cv::imread("/home/zhida/Desktop/example_data/2018_0318_155903_898.mp4_20180329_174349.380.jpg");
-    Mat img_src = cv::imread("/home/zhida/Desktop/example_data/2018_0318_155903_898.mp4_20180329_174350.214.jpg");
+//    Mat img_src = cv::imread("/home/zhida/Desktop/example_data/2018_0318_155903_898.mp4_20180329_174350.214.jpg");
 //    Mat img_src = cv::imread("/home/zhida/Desktop/example_data/2018_0318_155903_898.mp4_20180329_174342.713.jpg");
 //    Mat img_src = cv::imread("/home/zhida/Desktop/example_data/00129.png");
 //    Mat img_src = cv::imread("/home/zhida/Desktop/example_data/00165.png");
 //    Mat img_src = cv::imread("/home/zhida/Desktop/example_data/00131.png");
 //    Mat img_src = cv::imread("/home/zhida/Desktop/example_data/2018_0318_153903_894.mp4_20180329_162454.752.jpg");
-
+//
 //    Mat img_src = cv::imread("/home/zhida/Desktop/example_data/Columbia_Aerial_Jen_campus_city_3000px.jpg");
     Mat img_src_gray;
     Mat img_dst;
@@ -211,21 +216,24 @@ int main(){
     vector<vector<Point> > contours_hue;
     vector<Vec4i> hierarchy_hue;
     //Mat contours_hue_mat = ContourOperation(red_hue_range, contours_hue, hierarchy_hue, rng);
-    Mat contours_hue_;
+//    Mat contours_hue_;
     findContours(red_yellow_green_hue_range, contours_hue, hierarchy_hue, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE, Point(0,0) );
 
-//    my_imshow("contours_hue_mat", contours_hue_mat);
+    my_imshow("red_yellow_green_hue_range", red_yellow_green_hue_range);
 
     // 包围盒
 
 //    vector<Mat> img_src_hue_range_vector;
 //    Mat img_src_hue_range_merged;
+    vector<Rect> object_rect_vec;
+
     for (int i=0; i<contours_hue.size(); i++) {
 
         Rect rect0 = boundingRect(Mat(contours_hue[i]));
         double traffic_light_width = rect0.width;
         double traffic_light_height = rect0.height;
-        double traffic_light_shorter_side = (traffic_light_width < traffic_light_height) ? traffic_light_width : traffic_light_height;
+//        double traffic_light_shorter_side = (traffic_light_width < traffic_light_height) ? traffic_light_width : traffic_light_height;
+        double traffic_light_shorter_side = traffic_light_width;
 
 //        cout << "rect0: " << double(rect0.height) / double(rect0.width) << endl;
 
@@ -284,7 +292,7 @@ int main(){
 
         int houghLinesThreshlold = (int)(traffic_light_shorter_side * 1.5) > MIN_HOUGHLINE_THRESHOLD ? (int)(traffic_light_shorter_side * 1.5) : MIN_HOUGHLINE_THRESHOLD;
 //        cout << "houghLinesThreshlold: " << houghLinesThreshlold << endl;
-        HoughLines(canny_detected_edges, lines, 1.2, 1 * CV_PI / 180, houghLinesThreshlold, 0, 0);
+        HoughLines(canny_detected_edges, lines, 1.2, 1.0 * CV_PI / 180, houghLinesThreshlold, 0, 0);
 
         if (!lines.empty()) {
 
@@ -307,11 +315,19 @@ int main(){
 
             if (!lines.empty() && lines.size() == 4) {
 
+                vector<double> object_coord_vec_x_relative;
+                vector<double> object_coord_vec_y_relative;
                 for( size_t i = 0; i < lines.size(); i++ ){
+
                     float rho = lines[i][0], theta = lines[i][1];
                     Point pt1, pt2;
                     double a = cos(theta), b = sin(theta);
                     double x0 = a*rho, y0 = b*rho;
+                    vector<double> object_coord;
+
+                    object_coord_vec_x_relative.push_back(x0);
+                    object_coord_vec_y_relative.push_back(y0);
+
                     pt1.x = cvRound(x0 + 1000*(-b));
                     pt1.y = cvRound(y0 + 1000*(a));
                     pt2.x = cvRound(x0 - 1000*(-b));
@@ -319,8 +335,26 @@ int main(){
                     line( cdst, pt1, pt2, Scalar(255, 255, 0),1, CV_AA);
                 }
 
+                int base_tl_x = rect0.tl().x;
+                int base_tl_y = rect0.tl().y;
+
+                std::sort(object_coord_vec_x_relative.begin(), object_coord_vec_x_relative.end());
+                std::sort(object_coord_vec_y_relative.begin(), object_coord_vec_y_relative.end());
+
+                Point object_rect_tl = Point(object_coord_vec_x_relative[2] + base_tl_x, object_coord_vec_y_relative[2] + base_tl_y);
+//                Point object_rect_br = Point(object_coord_vec_x_relative.back(), object_coord_vec_y_relative.back());
+
+                int object_rect_width = (int)object_coord_vec_x_relative[3] - object_coord_vec_x_relative[2];
+                int object_rect_height = (int)object_coord_vec_y_relative[3] - object_coord_vec_y_relative[2];
+
+                Rect object_rect(object_rect_tl.x,object_rect_tl.y, object_rect_width, object_rect_height);
+                object_rect_vec.push_back(object_rect);
+
                 my_imshow("cdst" + to_string(i), cdst);
             }
+
+
+
 
 //            vector<float> thetaColl;
 //            vector<float> rhoColl;
@@ -378,6 +412,19 @@ int main(){
 
         //img_src_hue_range_vector.push_back(img_src_hue_range);
     }
+
+    for(int i=0; i<object_rect_vec.size(); i++){
+
+        Rect object_rec = object_rect_vec[i];
+        Mat object_mat = img_src(object_rec);
+
+        if (!object_mat.empty()) {
+            string outfilename = to_string(i) + ".jpg";
+            imwrite("/home/zhida/Documents/Code/traffic-light-detection/resource/result/"+outfilename, object_mat);
+        }
+    }
+
+
 
 //    Mat img_src_hue_range_merged;
 //    merge(img_src_hue_range_vector, img_src_hue_range_merged);
