@@ -173,16 +173,16 @@ void color_filter(Mat img_src_HSV, Mat& red_yellow_green_hue_range){
 
 
     // 加上红色出现区域
-    cv::inRange(img_src_HSV, cv::Scalar(0, 100, 100), cv::Scalar(10, 255, 255), lower_red_hue_range);
-    cv::inRange(img_src_HSV, cv::Scalar(160, 100, 100), cv::Scalar(179, 255, 255), upper_red_hue_range);
+    cv::inRange(img_src_HSV, cv::Scalar(0, 100, 100), cv::Scalar(10, 256, 256), lower_red_hue_range);
+    cv::inRange(img_src_HSV, cv::Scalar(160, 100, 100), cv::Scalar(179, 256, 256), upper_red_hue_range);
     cv::addWeighted(lower_red_hue_range, 1.0, upper_red_hue_range, 1.0, 0.0, red_yellow_green_hue_range);
 
     // 加上绿色出现区域
-    cv::inRange(img_src_HSV, cv::Scalar(35, 50, 100), cv::Scalar(77, 255, 255), green_hue_range);
+    cv::inRange(img_src_HSV, cv::Scalar(32, 50, 100), cv::Scalar(77, 256, 256), green_hue_range);
     cv::addWeighted(green_hue_range, 1.0, red_yellow_green_hue_range, 1.0, 0.0, red_yellow_green_hue_range);
 
     // 加上黄色出现区域
-    cv::inRange(img_src_HSV, cv::Scalar(22, 100, 100), cv::Scalar(38, 255, 255), yellow_hue_range);
+    cv::inRange(img_src_HSV, cv::Scalar(22, 100, 100), cv::Scalar(38, 256, 256), yellow_hue_range);
     cv::addWeighted(yellow_hue_range, 1.0, red_yellow_green_hue_range, 1.0, 0.0, red_yellow_green_hue_range);
 
 //    // 加上黑色出现区域
