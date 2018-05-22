@@ -170,6 +170,7 @@ void color_filter(Mat img_src_HSV, Mat& red_yellow_green_hue_range){
     Mat green_hue_range;
     Mat yellow_hue_range;
     Mat black_hue_range;
+    Mat bright_hue_range;
 
 
     // 加上红色出现区域
@@ -184,6 +185,11 @@ void color_filter(Mat img_src_HSV, Mat& red_yellow_green_hue_range){
     // 加上黄色出现区域
     cv::inRange(img_src_HSV, cv::Scalar(22, 100, 100), cv::Scalar(38, 256, 256), yellow_hue_range);
     cv::addWeighted(yellow_hue_range, 1.0, red_yellow_green_hue_range, 1.0, 0.0, red_yellow_green_hue_range);
+
+    // 加上特别亮的区域
+//    cv::inRange(img_src_HSV, cv::Scalar(0, 1, 248), cv::Scalar(179, 256, 256), bright_hue_range);
+//    cv::addWeighted(bright_hue_range, 1.0, red_yellow_green_hue_range, 1.0, 0.0, red_yellow_green_hue_range);
+
 
 //    // 加上黑色出现区域
 //    cv::inRange(img_src_HSV, cv::Scalar(0, 0, 0), cv::Scalar(179, 255, 46), black_hue_range);
@@ -302,7 +308,7 @@ void houghlines_operation(vector<Vec2f> lines, double traffic_light_shorter_side
             Rect object_rect(object_rect_tl.x,object_rect_tl.y, object_rect_width, object_rect_height);
             object_rect_vec.push_back(object_rect);
 
-            my_imshow("cdst" + to_string(index), cdst);
+            //my_imshow("cdst" + to_string(index), cdst);
         }
 
     }

@@ -9,7 +9,7 @@ using namespace cv;
 
 int main() {
 
-    Mat img = imread("/home/zhida/Desktop/example_data/2018_0318_153903_894.mp4_20180329_162437.151.jpg");
+    Mat img = imread("/home/zhida/Desktop/example_data/2018_0318_153903_894.mp4_20180329_162454.752.jpg");
 
     getColor(img, 0.5, 1);
 

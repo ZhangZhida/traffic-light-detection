@@ -14,8 +14,8 @@ int main(){
     vector<string> fileList;
 
 
-#define TEST_SINGLE_DIR
-    fileList.push_back("00163.png");
+//#define TEST_SINGLE_DIR
+    fileList.push_back("2018_0318_153903_894.mp4_20180329_162454.752.jpg");
 #ifndef TEST_SINGLE_DIR
     fileList = readFileList(inputDir);
 #endif //TEST_WHOLE_DIR
