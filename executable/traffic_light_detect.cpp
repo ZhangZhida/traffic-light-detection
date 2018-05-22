@@ -1,5 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include "../include/traffic_light_functions.h"
+#include "../include/MouseGetPoint.h"
 
 using namespace std;
 using namespace cv;
@@ -13,9 +14,9 @@ int main(){
     vector<string> fileList;
 
 
-//#define TEST_WHOLE_DIR
-    fileList.push_back("2018_0318_155903_898.mp4_20180329_174350.214.jpg");
-#ifndef TEST_WHOLE_DIR
+#define TEST_SINGLE_DIR
+    fileList.push_back("00163.png");
+#ifndef TEST_SINGLE_DIR
     fileList = readFileList(inputDir);
 #endif //TEST_WHOLE_DIR
 
@@ -89,6 +90,12 @@ int main(){
             //////////
             houghlines_operation(lines, traffic_light_shorter_side, MIN_HOUGHLINE_THRESHOLD, ROI_detected_edges, rect0, object_rect_vec, i);
 
+        }
+
+        for (int i=0; i<object_rect_vec.size(); i++) {
+
+            rectangle(img_src, object_rect_vec[i].tl(), object_rect_vec[i].br(), Scalar(0,0,255), 2);
+            my_imshow("img_src", img_src);
         }
 
         //////////
