@@ -7,7 +7,12 @@
 #define TRAFFIC_LIGHT_DETECTION_TRAFFIC_LIGHT_FUNCTIONS_H
 
 #include <opencv2/opencv.hpp>
-#include "FileOperator.h"
+#include <string>
+#include <vector>
+#include <sys/types.h>
+#include <dirent.h>
+#include <errno.h>
+#include <iostream>
 
 using namespace std;
 using namespace cv;

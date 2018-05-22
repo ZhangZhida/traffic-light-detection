@@ -1,6 +1,5 @@
 #include <opencv2/opencv.hpp>
-#include "traffic_light_functions.h"
-
+#include "../include/traffic_light_functions.h"
 
 using namespace std;
 using namespace cv;
