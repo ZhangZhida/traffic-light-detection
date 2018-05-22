@@ -97,6 +97,8 @@ int main(){
         //////////
         crop_areas(object_rect_vec, img_src);
 
+
+
         cv::waitKey(0);
 
     }

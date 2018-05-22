@@ -111,13 +111,15 @@ void houghLinesAnalyze(vector<Vec2f> lines, vector<Vec2f>& resultLines) {
     for (int j=0; j<lines.size();j++){
 
         float rho = lines[j][0], theta = lines[j][1];
+
+        // 要求theta角大约在PI/2左右 —> 竖直
         if(theta > 1.55 && theta < 1.59) {
 
-//            cout << "theta: " << theta << ", rho: " << rho << endl;
             thetaColl_vertical.push_back(theta);
             rhoColl_vertical.push_back(rho);
         }
 
+        // 要求theta角大约在0或者PI左右 —> 水平情况
         if(theta < 0.02 || theta > 3.13) {
 
 //            cout << "theta: " << theta << ", rho: " << rho << endl;
@@ -131,15 +133,6 @@ void houghLinesAnalyze(vector<Vec2f> lines, vector<Vec2f>& resultLines) {
         return;
     }
 
-    // 对霍夫变换得到的水平线进行预处理，位于上下两侧的线应该具有更大的权比较合理
-//    Mat thetaColl_horizontal_sorted;
-//    sort(Mat(thetaColl_horizontal), thetaColl_horizontal_sorted, SORT_ASCENDING);
-
-    // 用Kmeans分别对水平和数值的rho值进行聚类，结果中应该竖直和水平各有两个kmeans中心
-//    vector<string> labels;
-//    labels.push_back("horizontal");
-//    labels.push_back("vertical");
-
 
     Mat rhoColl_hori_mat = Mat(rhoColl_horizontal);
     Mat rhoColl_vert_mat = Mat(rhoColl_vertical);
@@ -147,22 +140,12 @@ void houghLinesAnalyze(vector<Vec2f> lines, vector<Vec2f>& resultLines) {
     Mat centers_horizontal;
     Mat centers_vertical;
 
-//    if (thetaColl_horizontal.size() == 1)
-//        centers_horizontal = Mat(thetaColl_horizontal);
-//    else
-//        kmeans(rhoColl_hori_mat, 2, labels_mat, TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1.0), 100, KMEANS_PP_CENTERS, centers_horizontal);
-//
-//    if (thetaColl_vertical.size() == 1)
-//        centers_vertical = Mat(thetaColl_vertical);
-//    else
-//        kmeans(rhoColl_vert_mat, 2, labels_mat, TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1.0), 100, KMEANS_PP_CENTERS, centers_vertical);
+    // kmeans聚类算法，对多条直线的rho值进行聚类，得到多个rho值的两个中心，存在centers_horizontal和centers_vertical里
     kmeans(rhoColl_hori_mat, 2, labels_mat, TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1.0), 100, KMEANS_PP_CENTERS, centers_horizontal);
     kmeans(rhoColl_vert_mat, 2, labels_mat, TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 10, 1.0), 100, KMEANS_PP_CENTERS, centers_vertical);
 
 
-
-
-//        cout << "labels_mat: " << labels_mat << endl;
+//    cout << "labels_mat: " << labels_mat << endl;
 //    cout << "centers_horizontal: " << centers_horizontal << endl;
 //    cout << "centers_vertical" << centers_vertical << endl;
 
@@ -176,7 +159,6 @@ void houghLinesAnalyze(vector<Vec2f> lines, vector<Vec2f>& resultLines) {
     resultLines.push_back(resultLine_vert_1);
     resultLines.push_back(resultLine_vert_2);
 
-//
 //    cout << "resultLine_hori_1" << resultLine_hori_1 << endl;
 //    cout << "resultLine_hori_2" << resultLine_hori_2 << endl;
 }
@@ -203,7 +185,7 @@ void color_filter(Mat img_src_HSV, Mat& red_yellow_green_hue_range){
     cv::inRange(img_src_HSV, cv::Scalar(22, 100, 100), cv::Scalar(38, 255, 255), yellow_hue_range);
     cv::addWeighted(yellow_hue_range, 1.0, red_yellow_green_hue_range, 1.0, 0.0, red_yellow_green_hue_range);
 
-    // 加上黑色出现区域
+//    // 加上黑色出现区域
 //    cv::inRange(img_src_HSV, cv::Scalar(0, 0, 0), cv::Scalar(179, 255, 46), black_hue_range);
 //    cv::addWeighted(black_hue_range, 1.0, red_yellow_green_hue_range, 1.0, 0.0, red_yellow_green_hue_range);
 //
@@ -272,30 +254,17 @@ void ROI_canny_operation(Mat img_src_hue_range, Mat& detected_edges){
 
 void houghlines_operation(vector<Vec2f> lines, double traffic_light_shorter_side, int MIN_HOUGHLINE_THRESHOLD, Mat detected_edges, Rect rect0, vector<Rect>& object_rect_vec, int index) {
 
-//    vector<Vec2f> lines;
-//    int houghLinesThreshlold = (int)(traffic_light_shorter_side * 1.5) > MIN_HOUGHLINE_THRESHOLD ? (int)(traffic_light_shorter_side * 1.5) : MIN_HOUGHLINE_THRESHOLD;
-////        cout << "houghLinesThreshlold: " << houghLinesThreshlold << endl;
-//    HoughLines(detected_edges, lines, 1.2, 1.0 * CV_PI / 180, houghLinesThreshlold, 0, 0);
-
     if (!lines.empty()) {
 
         Mat cdst;
         cvtColor(detected_edges, cdst, CV_GRAY2BGR);
 
-//            Vec4i l = lines[i];
-//            line( cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(255,255,0), 2);
-//            canny_detected_edges.copyTo(cdst);
-//            cdst = Mat(canny_detected_edges.size(), canny_detected_edges.type(), Scalar(255,255,255));
-//            for( size_t i = 0; i < lines.size(); i++ )
-//            {
-//                Vec2f l = lines[i];
-//                line( cdst, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
-//            }
-
+        // 使用kmeans聚类算法对诸多竖直和水平的直线进行筛选，这里假设：对于竖直或者水平情况，直线分为了两簇，用kmeans得到两簇直线的中心直线作为结果
         vector<Vec2f> resultLines;
         houghLinesAnalyze(lines, resultLines);
         lines = resultLines;
 
+        // 检查有两条竖直直线和两条水平直线
         if (!lines.empty() && lines.size() == 4) {
 
             vector<double> object_coord_vec_x_relative;
@@ -335,39 +304,6 @@ void houghlines_operation(vector<Vec2f> lines, double traffic_light_shorter_side
 
             my_imshow("cdst" + to_string(index), cdst);
         }
-
-
-
-
-//            vector<float> thetaColl;
-//            vector<float> rhoColl;
-//            for (int j=0; j<lines.size();j++){
-//
-//                float rho = lines[j][0], theta = lines[j][1];
-//                if( (theta > 1.55 && theta < 1.59) || (theta < 0.1 || theta > 3.14)) {
-//
-//                    cout << "theta: " << theta << ", rho: " << rho << endl;
-//                    thetaColl.push_back(theta);
-//                    rhoColl.push_back(rho);
-//                }
-//
-//
-//            }
-//
-//
-//            for(int j=0; j<rhoColl.size(); j++) {
-//
-//                float rho = rhoColl[j], theta = thetaColl[j];
-//                Point pt1, pt2;
-//
-//                double a = cos(theta), b = sin(theta);
-//                double x0 = a*rho, y0 = b*rho;
-//                pt1.x = cvRound(x0 + 1000 * (-b));//cvRound，函数的一种，对一个double型的数进行四舍五入
-//                pt1.y = cvRound(y0 + 1000 * (a));
-//                pt2.x = cvRound(x0 - 1000 * (-b));
-//                pt2.y = cvRound(y0 - 1000 * (a));
-//                line(cdst, pt1, pt2, Scalar(255, 255, 0), 1, CV_AA);
-//            }
 
     }
 }
